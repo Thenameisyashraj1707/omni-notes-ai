@@ -5,19 +5,38 @@ import { Footer } from "@/components/layout/Footer";
 import { SummarizationForm, SummarizationOptions } from "@/components/summarization/SummarizationForm";
 import { SummaryResult, SummaryData } from "@/components/summarization/SummaryResult";
 import { summarizeDocument } from "@/services/summarizationService";
+import { ApiKeySettings } from "@/components/settings/ApiKeySettings";
 import { Brain, FileText, Sparkles, FileAudio, FileVideo } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [summaryResult, setSummaryResult] = useState<SummaryData | null>(null);
+  const { toast } = useToast();
 
   const handleSummarize = async (file: File, options: SummarizationOptions) => {
+    // Check if API key is set
+    const apiKey = localStorage.getItem("openai_api_key");
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your OpenAI API key in settings first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsProcessing(true);
     try {
       const result = await summarizeDocument(file, options);
       setSummaryResult(result);
     } catch (error) {
       console.error("Error summarizing document:", error);
+      toast({
+        title: "Summarization Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -36,12 +55,17 @@ const Index = () => {
           {!summaryResult ? (
             <>
               <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold mb-4 inline-flex items-center">
-                  <Sparkles className="h-8 w-8 mr-2 text-omni-primary" />
-                  <span className="bg-gradient-omni text-transparent bg-clip-text">
-                    OmniSummarize
-                  </span>
-                </h1>
+                <div className="flex justify-center items-center mb-4">
+                  <h1 className="text-4xl font-bold inline-flex items-center">
+                    <Sparkles className="h-8 w-8 mr-2 text-omni-primary" />
+                    <span className="bg-gradient-omni text-transparent bg-clip-text">
+                      OmniSummarize
+                    </span>
+                  </h1>
+                  <div className="ml-4">
+                    <ApiKeySettings />
+                  </div>
+                </div>
                 <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                   Transform PDFs, audio, and videos into concise, 
                   intelligent summaries with AI-powered analysis.
