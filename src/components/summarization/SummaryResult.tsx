@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { Download, Copy, CheckCircle, FileText, Clock, MessageCircle, Tag, Bookmark } from "lucide-react";
+import { Download, Copy, CheckCircle, FileText, Clock, MessageCircle, Tag, Bookmark, ChevronDown, ChevronUp, Layers, Sparkles, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export interface SummaryData {
   title: string;
@@ -14,6 +15,12 @@ export interface SummaryData {
   keywords: string[];
   readingTime: string;
   sentiment?: string;
+  topics?: string[];
+  chapters?: {
+    title: string;
+    content: string;
+  }[];
+  sourceType: "document" | "audio" | "video";
   createdAt: Date;
 }
 
@@ -24,6 +31,7 @@ interface SummaryResultProps {
 
 export const SummaryResult = ({ data, onReset }: SummaryResultProps) => {
   const [copied, setCopied] = useState(false);
+  const [openChapter, setOpenChapter] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleCopy = (text: string) => {
@@ -50,9 +58,14 @@ ${data.bulletPoints.map(point => `- ${point}`).join('\n')}
 ## Keywords
 ${data.keywords.join(', ')}
 
+${data.topics ? `## Topics\n${data.topics.join(', ')}\n` : ''}
+
+${data.chapters ? `## Chapter Summaries\n${data.chapters.map(chapter => `### ${chapter.title}\n${chapter.content}`).join('\n\n')}\n` : ''}
+
 Reading time: ${data.readingTime}
 ${data.sentiment ? `Sentiment: ${data.sentiment}` : ''}
 Generated on: ${data.createdAt.toLocaleString()}
+Source type: ${data.sourceType}
     `.trim();
 
     // Create and download file
@@ -72,11 +85,25 @@ Generated on: ${data.createdAt.toLocaleString()}
     });
   };
 
+  const getSourceIcon = () => {
+    switch (data.sourceType) {
+      case "audio":
+        return <Badge variant="outline" className="bg-omni-secondary/10 text-omni-secondary border-omni-secondary/20">Audio</Badge>;
+      case "video":
+        return <Badge variant="outline" className="bg-omni-accent/10 text-omni-accent border-omni-accent/20">Video</Badge>;
+      default:
+        return <Badge variant="outline" className="bg-omni-primary/10 text-omni-primary border-omni-primary/20">Document</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">{data.title}</h2>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-2xl font-bold">{data.title}</h2>
+            {getSourceIcon()}
+          </div>
           <div className="flex items-center mt-2 text-sm text-gray-500">
             <Clock className="h-4 w-4 mr-1" />
             <span className="mr-4">{data.readingTime}</span>
@@ -120,7 +147,7 @@ Generated on: ${data.createdAt.toLocaleString()}
       </div>
 
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="summary">
             <FileText className="h-4 w-4 mr-2" />
             Summary
@@ -133,6 +160,12 @@ Generated on: ${data.createdAt.toLocaleString()}
             <Tag className="h-4 w-4 mr-2" />
             Keywords
           </TabsTrigger>
+          {data.chapters && data.chapters.length > 0 && (
+            <TabsTrigger value="chapters">
+              <Layers className="h-4 w-4 mr-2" />
+              Chapters
+            </TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="summary" className="mt-4">
@@ -141,6 +174,22 @@ Generated on: ${data.createdAt.toLocaleString()}
               <p className="whitespace-pre-wrap leading-relaxed">
                 {data.summary}
               </p>
+              
+              {data.topics && data.topics.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <div className="flex items-center mb-2">
+                    <Sparkles className="h-4 w-4 mr-2 text-omni-primary" />
+                    <h4 className="font-medium">Main Topics</h4>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {data.topics.map((topic, idx) => (
+                      <Badge key={idx} variant="secondary">
+                        {topic}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -171,6 +220,36 @@ Generated on: ${data.createdAt.toLocaleString()}
             </CardContent>
           </Card>
         </TabsContent>
+        
+        {data.chapters && data.chapters.length > 0 && (
+          <TabsContent value="chapters" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  {data.chapters.map((chapter, idx) => (
+                    <Collapsible 
+                      key={idx} 
+                      open={openChapter === idx} 
+                      onOpenChange={() => setOpenChapter(openChapter === idx ? null : idx)}
+                      className="border rounded-md overflow-hidden"
+                    >
+                      <CollapsibleTrigger className="flex items-center justify-between w-full p-3 text-left hover:bg-gray-50">
+                        <div className="font-medium">{chapter.title}</div>
+                        {openChapter === idx ? 
+                          <ChevronUp className="h-4 w-4" /> : 
+                          <ChevronDown className="h-4 w-4" />
+                        }
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="p-3 pt-0 border-t">
+                        <p className="text-gray-700 whitespace-pre-wrap">{chapter.content}</p>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

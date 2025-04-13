@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SummarizationForm, SummarizationOptions } from "@/components/summarization/SummarizationForm";
 import { SummaryResult, SummaryData } from "@/components/summarization/SummaryResult";
 import { summarizeDocument } from "@/services/summarizationService";
-import { Brain, FileText, Sparkles } from "lucide-react";
+import { Brain, FileText, Sparkles, FileAudio, FileVideo } from "lucide-react";
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,21 +61,21 @@ const Index = () => {
                 
                 <div className="bg-white rounded-xl shadow-sm p-6 border flex flex-col items-center text-center">
                   <div className="h-14 w-14 rounded-full bg-omni-secondary/10 flex items-center justify-center mb-4">
-                    <Brain className="h-7 w-7 text-omni-secondary" />
+                    <FileAudio className="h-7 w-7 text-omni-secondary" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">AI-Powered Summaries</h3>
+                  <h3 className="text-lg font-semibold mb-2">Audio Transcription</h3>
                   <p className="text-gray-600">
-                    Intelligent processing extracts the most relevant points and key insights
+                    Convert audio recordings into text and generate concise summaries
                   </p>
                 </div>
                 
                 <div className="bg-white rounded-xl shadow-sm p-6 border flex flex-col items-center text-center">
                   <div className="h-14 w-14 rounded-full bg-omni-accent/10 flex items-center justify-center mb-4">
-                    <Sparkles className="h-7 w-7 text-omni-accent" />
+                    <FileVideo className="h-7 w-7 text-omni-accent" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Enhanced Organization</h3>
+                  <h3 className="text-lg font-semibold mb-2">Video Content Analysis</h3>
                   <p className="text-gray-600">
-                    Get bullet points, keywords, and sentiment analysis for better comprehension
+                    Extract information from videos including audio and visual content
                   </p>
                 </div>
               </div>
