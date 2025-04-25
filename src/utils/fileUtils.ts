@@ -1,4 +1,3 @@
-
 import { transcribeAudioVideo, loadTransformersLibrary } from "@/services/speechToTextService";
 
 // Function to extract text content from a file
@@ -25,49 +24,41 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
         return transcription;
       } else {
         console.warn("Transcription returned empty result, using fallback");
-        return createMockContentForFile(file);
+        return await readFileContent(file);
       }
     } catch (error) {
       console.error("Error transcribing audio/video:", error);
-      return createMockContentForFile(file);
+      return await readFileContent(file);
     }
   }
   
   // For other file types (like PDFs) or fallback
-  return createMockContentForFile(file);
+  return await readFileContent(file);
 };
 
-// Helper function to create mock content based on file type
-const createMockContentForFile = (file: File): string => {
-  const fileType = getFileTypeCategory(file);
-  const fileName = file.name;
-  
-  let content = `Content extracted from ${fileName}.\n\n`;
-  
-  if (fileType === "audio") {
-    content += `This is a transcript of the audio file "${fileName}".\n\n`;
-    content += `In this audio recording, the speaker discusses various topics including artificial intelligence, 
-    machine learning, and their applications in modern society. They analyze current trends
-    and potential future developments. The speaker also addresses ethical considerations
-    and regulatory challenges associated with these technologies. The conclusion emphasizes
-    the importance of responsible innovation and international cooperation.`;
-  } else if (fileType === "video") {
-    content += `This is a transcript of the video file "${fileName}".\n\n`;
-    content += `The video presents an in-depth explanation of quantum computing, comparing classical
-    and quantum approaches. The presenter uses visual aids to demonstrate key concepts like
-    quantum bits (qubits), superposition, and entanglement. They highlight recent breakthroughs
-    and discuss potential applications in fields such as cryptography, drug discovery, and
-    optimization problems that could revolutionize various industries.`;
-  } else {
-    content += `This document discusses the impact of artificial intelligence on modern society,
-    covering economic benefits, ethical concerns, and future challenges. It highlights how
-    AI is transforming industries through automation while raising questions about job
-    displacement and privacy. The analysis includes case studies from various sectors and
-    geographic regions. The conclusion emphasizes the need for balanced regulation that
-    encourages innovation while protecting public interests.`;
+// Helper function to read file content or create mock content
+const readFileContent = async (file: File): Promise<string> => {
+  try {
+    // Try to read the file as text
+    const text = await file.text();
+    if (text && text.trim().length > 0) {
+      return text;
+    }
+  } catch (e) {
+    console.warn("Could not read file as text:", e);
   }
   
-  return content;
+  // If reading as text fails, use a mock content (but make it clear it's a fallback)
+  return `[Unable to extract content from ${file.name}. This is fallback content.]
+
+This file appears to be in a format that couldn't be directly processed. 
+If this is unexpected, please try a different file format or check that the file is not corrupted.
+
+Some possible content based on the file name:
+${file.name.replace(/[^a-zA-Z0-9\s]/g, ' ')} might contain information about 
+${file.name.split(/[^a-zA-Z0-9]/).filter(w => w.length > 3).join(', ')}.
+
+Please note that this text is generated as a fallback and does not represent the actual content of your file.`;
 };
 
 // Function to determine if a file is processable
