@@ -11,7 +11,8 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
   }
   
   // For audio/video files, use the transcription service
-  if (file.type.includes('audio') || file.type.includes('video')) {
+  if (file.type.includes('audio') || file.type.includes('video') || 
+      ['mp3', 'wav', 'ogg', 'mp4', 'mov', 'avi', 'm4a', 'webm'].includes(file.name.split('.').pop()?.toLowerCase() || '')) {
     try {
       console.log("Attempting to transcribe audio/video file");
       // Try to load the transformers library if needed
@@ -74,11 +75,17 @@ export const isProcessableFile = (file: File): boolean => {
   const fileType = file.type.toLowerCase();
   const extension = file.name.split('.').pop()?.toLowerCase() || '';
   
-  return fileType.includes('text') || 
-         fileType.includes('pdf') || 
-         fileType.includes('audio') || 
-         fileType.includes('video') ||
-         ['pdf', 'txt', 'docx', 'mp3', 'wav', 'ogg', 'mp4', 'mov', 'avi'].includes(extension);
+  // Check by file type
+  if (fileType.includes('text') || 
+      fileType.includes('pdf') || 
+      fileType.includes('audio') || 
+      fileType.includes('video')) {
+    return true;
+  }
+  
+  // Check by extension
+  const supportedExtensions = ['pdf', 'txt', 'docx', 'mp3', 'wav', 'ogg', 'mp4', 'mov', 'avi', 'm4a', 'webm'];
+  return supportedExtensions.includes(extension);
 };
 
 // Helper function to get file type category

@@ -99,6 +99,10 @@ export const FileUploader = ({
     setSelectedFile(null);
   };
 
+  const handleButtonClick = () => {
+    document.getElementById('file-upload')?.click();
+  };
+
   return (
     <div className="w-full">
       {!selectedFile ? (
@@ -120,23 +124,21 @@ export const FileUploader = ({
             onChange={handleFileChange}
             className="hidden"
           />
-          <label 
-            htmlFor="file-upload"
-            className="flex flex-col items-center justify-center cursor-pointer"
-          >
+          <div className="flex flex-col items-center justify-center cursor-pointer">
             <Upload className="h-12 w-12 text-gray-400 mb-3" />
             <p className="text-lg font-medium mb-1">Drag and drop file here</p>
             <p className="text-sm text-gray-500 mb-4">or click to browse files</p>
             <Button 
               type="button" 
               className="bg-gradient-omni hover:opacity-90 transition-opacity"
+              onClick={handleButtonClick}
             >
               Select File
             </Button>
             <p className="text-xs text-gray-400 mt-4">
               Max file size: 10MB. Supporting: {getFileTypeDescription()}
             </p>
-          </label>
+          </div>
         </div>
       ) : (
         <div className="border rounded-lg p-4 bg-white">
