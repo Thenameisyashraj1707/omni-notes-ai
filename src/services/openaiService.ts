@@ -1,3 +1,4 @@
+
 import { SummarizationOptions } from "@/components/summarization/SummarizationForm";
 
 // Interface for the OpenAI API request
@@ -29,53 +30,67 @@ interface OpenAIResponse {
 
 // Process text content without API key
 const processContentLocally = (fileContent: string, options: SummarizationOptions): string => {
-  // Get the main paragraphs - split by double newlines
-  const paragraphs = fileContent.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  console.log("Processing content locally...");
   
-  // Determine length based on options
-  let maxParagraphs = paragraphs.length;
-  if (options.lengthType === "short") {
-    maxParagraphs = Math.max(1, Math.floor(paragraphs.length * 0.3));
-  } else if (options.lengthType === "medium") {
-    maxParagraphs = Math.max(1, Math.floor(paragraphs.length * 0.6));
-  } else {
-    maxParagraphs = Math.max(1, Math.floor(paragraphs.length * 0.9));
-  }
-  
-  // Take the first paragraph (usually contains the main content) and a selection of others
-  const selectedParagraphs = [paragraphs[0]];
-  
-  // If there are more paragraphs, add some
-  if (paragraphs.length > 1) {
-    // Add some important paragraphs (assuming paragraphs with keywords might be important)
-    const keywords = ["conclusion", "summary", "therefore", "result", "important"];
-    const importantIndexes = new Set<number>();
+  try {
+    // Get the main paragraphs - split by double newlines
+    const paragraphs = fileContent.split(/\n\s*\n/).filter(p => p.trim().length > 0);
     
-    // Find paragraphs with important keywords
-    paragraphs.forEach((p, idx) => {
-      if (keywords.some(keyword => p.toLowerCase().includes(keyword))) {
-        importantIndexes.add(idx);
-      }
-    });
-    
-    // Add some evenly distributed paragraphs to reach maxParagraphs
-    const step = Math.max(1, Math.floor(paragraphs.length / maxParagraphs));
-    for (let i = 0; i < paragraphs.length && selectedParagraphs.length < maxParagraphs; i += step) {
-      if (!selectedParagraphs.includes(paragraphs[i])) {
-        selectedParagraphs.push(paragraphs[i]);
-      }
+    if (paragraphs.length === 0) {
+      // If no paragraphs were found, return the entire content truncated
+      return fileContent.length > 500 
+        ? fileContent.substring(0, 500) + "..." 
+        : fileContent;
     }
     
-    // Add important paragraphs if not already added
-    importantIndexes.forEach(idx => {
-      if (!selectedParagraphs.includes(paragraphs[idx]) && selectedParagraphs.length < maxParagraphs) {
-        selectedParagraphs.push(paragraphs[idx]);
+    // Determine length based on options
+    let maxParagraphs = paragraphs.length;
+    if (options.lengthType === "short") {
+      maxParagraphs = Math.max(1, Math.floor(paragraphs.length * 0.3));
+    } else if (options.lengthType === "medium") {
+      maxParagraphs = Math.max(1, Math.floor(paragraphs.length * 0.6));
+    } else {
+      maxParagraphs = Math.max(1, Math.floor(paragraphs.length * 0.9));
+    }
+    
+    // Take the first paragraph (usually contains the main content) and a selection of others
+    const selectedParagraphs = [paragraphs[0]];
+    
+    // If there are more paragraphs, add some
+    if (paragraphs.length > 1) {
+      // Add some important paragraphs (assuming paragraphs with keywords might be important)
+      const keywords = ["conclusion", "summary", "therefore", "result", "important"];
+      const importantIndexes = new Set<number>();
+      
+      // Find paragraphs with important keywords
+      paragraphs.forEach((p, idx) => {
+        if (keywords.some(keyword => p.toLowerCase().includes(keyword))) {
+          importantIndexes.add(idx);
+        }
+      });
+      
+      // Add some evenly distributed paragraphs to reach maxParagraphs
+      const step = Math.max(1, Math.floor(paragraphs.length / maxParagraphs));
+      for (let i = 0; i < paragraphs.length && selectedParagraphs.length < maxParagraphs; i += step) {
+        if (!selectedParagraphs.includes(paragraphs[i])) {
+          selectedParagraphs.push(paragraphs[i]);
+        }
       }
-    });
+      
+      // Add important paragraphs if not already added
+      importantIndexes.forEach(idx => {
+        if (!selectedParagraphs.includes(paragraphs[idx]) && selectedParagraphs.length < maxParagraphs) {
+          selectedParagraphs.push(paragraphs[idx]);
+        }
+      });
+    }
+    
+    // Join the selected paragraphs together
+    return selectedParagraphs.join('\n\n');
+  } catch (error) {
+    console.error("Error in local processing:", error);
+    return "The content could not be processed properly. This may be due to the file format or content structure. Please try a different file or format.";
   }
-  
-  // Join the selected paragraphs together
-  return selectedParagraphs.join('\n\n');
 };
 
 export const generateSummaryWithOpenAI = async (
@@ -91,7 +106,7 @@ export const generateSummaryWithOpenAI = async (
     return processContentLocally(fileContent, options);
   }
 
-  // If API key is available, use OpenAI
+  // If API key is available, try to use OpenAI
   try {
     // Determine max tokens based on length type
     const maxTokens = 
@@ -128,6 +143,7 @@ export const generateSummaryWithOpenAI = async (
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error("OpenAI API error:", errorData);
       throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
     }
 

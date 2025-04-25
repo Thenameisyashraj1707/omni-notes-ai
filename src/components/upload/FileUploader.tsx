@@ -49,17 +49,19 @@ export const FileUploader = ({
   };
 
   const isValidFileType = (file: File): boolean => {
+    if (acceptedFileTypes.length === 0) return true;
+    
     const fileExt = `.${getFileTypeExtension(file)}`;
     return acceptedFileTypes.includes(fileExt);
   };
 
   const getFileIcon = (file: File) => {
     const fileExt = getFileTypeExtension(file);
-    if (['pdf'].includes(fileExt)) {
+    if (['pdf', 'docx', 'doc', 'txt'].includes(fileExt)) {
       return <FileType className="h-6 w-6 text-omni-primary" />;
-    } else if (['mp3', 'wav', 'ogg'].includes(fileExt)) {
+    } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(fileExt)) {
       return <FileAudio className="h-6 w-6 text-omni-secondary" />;
-    } else if (['mp4', 'mov', 'avi'].includes(fileExt)) {
+    } else if (['mp4', 'mov', 'avi', 'webm'].includes(fileExt)) {
       return <FileVideo className="h-6 w-6 text-omni-accent" />;
     }
     return <FileType className="h-6 w-6 text-omni-primary" />;
@@ -89,6 +91,16 @@ export const FileUploader = ({
         variant: "destructive",
       });
       return;
+    }
+    
+    // Check if file is a Word document (.docx, .doc)
+    const fileExt = getFileTypeExtension(file);
+    if (['docx', 'doc'].includes(fileExt)) {
+      toast({
+        title: "Limited support for Office documents",
+        description: "Microsoft Office documents have limited support. For best results, convert to PDF or plain text.",
+        variant: "warning",
+      });
     }
 
     setSelectedFile(file);

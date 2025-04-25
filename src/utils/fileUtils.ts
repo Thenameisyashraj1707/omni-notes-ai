@@ -10,13 +10,22 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
     return await file.text();
   }
   
-  // For Office documents (docx, etc)
+  // Check if it's a binary file format that might look like a Word document
   const extension = file.name.split('.').pop()?.toLowerCase() || '';
-  if (file.type.includes('officedocument') || ['docx', 'xlsx', 'pptx'].includes(extension)) {
+  
+  // For Office documents (docx, etc)
+  if (file.type.includes('officedocument') || ['docx', 'xlsx', 'pptx', 'doc', 'xls', 'ppt'].includes(extension)) {
     console.log("Processing Office document");
     try {
+      // Try to handle as text first (some .docx might contain readable text)
+      const textContent = await file.text();
+      
+      // If it's not obviously binary (PK header), try to use it
+      if (!textContent.startsWith('PK')) {
+        return textContent;
+      }
+      
       // Office documents are binary and need special handling
-      // For now, we'll use a fallback that explains the limitation
       return `[This appears to be a Microsoft Office document (${extension})]\n\n` +
         `Currently, our system can only extract text from plain text files, PDFs, and media files.\n\n` +
         `For Microsoft Office documents like Word (.docx), Excel (.xlsx), or PowerPoint (.pptx), ` +
@@ -57,8 +66,16 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
     try {
       // Try to read the PDF as text (may not work well)
       const text = await file.text();
-      if (text && text.trim().length > 0 && !text.startsWith('%PDF')) {
-        return text;
+      
+      // Check if we got actual content or just binary data
+      if (text && text.trim().length > 0) {
+        if (!text.startsWith('%PDF')) {
+          return text; // This seems like valid text content
+        }
+        
+        // This is binary PDF data, return a helpful message
+        return `This PDF document contains binary data that cannot be easily extracted as plain text. The system has attempted to extract text content but may not be able to preserve all formatting and content.\n\n` +
+          `For best results with PDF documents, consider using a dedicated PDF-to-text converter before uploading.`;
       } else {
         return `[This appears to be a PDF document]\n\n` +
           `Our system can extract basic text from PDFs, but complex formatting, tables, or images cannot be processed.\n\n` +
@@ -87,7 +104,20 @@ const readFileContent = async (file: File): Promise<string> => {
     console.warn("Could not read file as text:", e);
   }
   
-  // If reading as text fails or is binary data, use a fallback message
+  // If reading as text fails or is binary data, try to extract readable portions
+  try {
+    // Try to extract any readable text content
+    const text = await file.text();
+    const extractedText = extractReadableText(text);
+    
+    if (extractedText && extractedText.trim().length > 100) {
+      return extractedText;
+    }
+  } catch (e) {
+    console.warn("Could not extract readable text:", e);
+  }
+  
+  // If all else fails, use a fallback message
   return `[Unable to extract content from ${file.name}]\n\n` +
     `The file you uploaded appears to be in a format that cannot be directly processed as text. ` +
     `This may be a binary file, a corrupted file, or a format that requires special processing.\n\n` +
@@ -97,6 +127,18 @@ const readFileContent = async (file: File): Promise<string> => {
     `- Using simpler formatting in your original document\n` +
     `- For audio/video files, ensure they're in common formats like MP3, WAV, or MP4\n\n` +
     `If you believe this is an error, please try a different file or format.`;
+};
+
+// Helper function to extract readable text from potentially binary data
+const extractReadableText = (text: string): string => {
+  // Remove null bytes and other control characters
+  const cleanText = text.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F]/g, "");
+  
+  // Extract sequences of printable ASCII characters (at least 5 chars long)
+  const matches = cleanText.match(/[A-Za-z0-9\s.,;:'"()\[\]{}!@#$%^&*\-+=?/\\|<>]{5,}/g) || [];
+  
+  // Join the matches with newlines
+  return matches.join("\n");
 };
 
 // Helper function to detect binary data in text
