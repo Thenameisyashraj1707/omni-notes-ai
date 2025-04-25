@@ -6,19 +6,36 @@ import { SummarizationForm, SummarizationOptions } from "@/components/summarizat
 import { SummaryResult, SummaryData } from "@/components/summarization/SummaryResult";
 import { summarizeDocument } from "@/services/summarizationService";
 import { ApiKeySettings } from "@/components/settings/ApiKeySettings";
-import { Brain, FileText, Sparkles, FileAudio, FileVideo } from "lucide-react";
+import { Brain, FileText, Sparkles, FileAudio, FileVideo, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [summaryResult, setSummaryResult] = useState<SummaryData | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleSummarize = async (file: File, options: SummarizationOptions) => {
     setIsProcessing(true);
+    setUploadError(null);
+    
     try {
+      // Check file size
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setUploadError("File size exceeds the 10MB limit. Please upload a smaller file.");
+        setIsProcessing(false);
+        return;
+      }
+      
       const result = await summarizeDocument(file, options);
       setSummaryResult(result);
+      
+      // If summary contains an error message, display it as an alert
+      if (result.summary.includes("[Unable to extract content") || 
+          result.summary.includes("[This appears to be")) {
+        setUploadError("Warning: The file format may not be fully supported. The summary may be incomplete.");
+      }
       
       // Only show API key notice if user has enabled features requiring API
       const apiKey = localStorage.getItem("openai_api_key");
@@ -31,6 +48,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error("Error summarizing document:", error);
+      setUploadError("Failed to summarize the document. Please try again or try a different file format.");
       toast({
         title: "Summarization Failed",
         description: error instanceof Error ? error.message : "An unknown error occurred",
@@ -43,6 +61,7 @@ const Index = () => {
 
   const handleReset = () => {
     setSummaryResult(null);
+    setUploadError(null);
   };
 
   return (
@@ -73,6 +92,15 @@ const Index = () => {
                   Basic summarization works without an API key. For advanced features, add your OpenAI API key in settings.
                 </p>
               </div>
+
+              {uploadError && (
+                <Alert variant="destructive" className="mb-6 max-w-3xl mx-auto">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  <AlertDescription>
+                    {uploadError}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
                 <div className="bg-white rounded-xl shadow-sm p-6 border flex flex-col items-center text-center">
@@ -106,7 +134,20 @@ const Index = () => {
                 </div>
               </div>
               
-              <SummarizationForm onSummarize={handleSummarize} isProcessing={isProcessing} />
+              <div className="max-w-3xl mx-auto">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-amber-800 text-sm">
+                  <p className="flex items-start">
+                    <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Supported formats:</strong> Plain text (.txt), PDF, MP3, WAV, MP4, and more.
+                      <br />
+                      Office documents (.docx, .xlsx, .pptx) have limited support. For best results, please convert Office documents to PDF or plain text before uploading.
+                    </span>
+                  </p>
+                </div>
+                
+                <SummarizationForm onSummarize={handleSummarize} isProcessing={isProcessing} />
+              </div>
             </>
           ) : (
             <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-6 border">
