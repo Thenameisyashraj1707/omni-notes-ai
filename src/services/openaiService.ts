@@ -1,4 +1,3 @@
-
 import { SummarizationOptions } from "@/components/summarization/SummarizationForm";
 
 // Interface for the OpenAI API request
@@ -28,10 +27,47 @@ interface OpenAIResponse {
   };
 }
 
+const DEMO_SUMMARIES = {
+  document: `This document discusses the impact of artificial intelligence on modern society,
+covering economic benefits, ethical concerns, and future challenges.
+It highlights how AI is transforming industries through automation while raising questions
+about job displacement and privacy. The conclusion emphasizes the need for balanced
+regulation that encourages innovation while protecting public interests.`,
+  
+  audio: `In this audio recording, the speaker presents research findings on climate change
+mitigation strategies. They discuss renewable energy adoption rates across different
+countries and analyze policy effectiveness. The presentation concludes with
+recommendations for accelerating the transition to sustainable energy systems through
+improved international cooperation and targeted economic incentives.`,
+  
+  video: `This video explains quantum computing fundamentals, comparing classical and quantum
+approaches. The presenter uses animations to demonstrate quantum bits (qubits) and core
+concepts like superposition and entanglement. They showcase recent breakthroughs in 
+quantum computing research and discuss potential applications in cryptography, 
+drug discovery, and optimization problems that could revolutionize various industries.`
+};
+
+const DEMO_KEYWORDS = [
+  "Artificial Intelligence", "Machine Learning", "Innovation", 
+  "Ethics", "Technology", "Automation", "Digital Transformation"
+];
+
+const isDemoMode = () => {
+  const apiKey = localStorage.getItem("openai_api_key");
+  return !apiKey || apiKey.trim() === "";
+};
+
 export const generateSummaryWithOpenAI = async (
   fileContent: string,
   options: SummarizationOptions
 ): Promise<string> => {
+  // If in demo mode, return a sample summary based on source type
+  if (isDemoMode()) {
+    console.log("Using demo mode for summary generation");
+    const sourceType = options.sourceType || "document";
+    return DEMO_SUMMARIES[sourceType as keyof typeof DEMO_SUMMARIES] || DEMO_SUMMARIES.document;
+  }
+
   // Get OpenAI API key from localStorage
   const apiKey = localStorage.getItem("openai_api_key");
   
@@ -87,6 +123,12 @@ export const generateSummaryWithOpenAI = async (
 };
 
 export const extractKeywordsWithOpenAI = async (content: string): Promise<string[]> => {
+  // If in demo mode, return sample keywords
+  if (isDemoMode()) {
+    console.log("Using demo mode for keyword extraction");
+    return DEMO_KEYWORDS;
+  }
+
   const apiKey = localStorage.getItem("openai_api_key");
   
   if (!apiKey) {
@@ -277,6 +319,18 @@ export const createChapterSummariesWithOpenAI = async (content: string): Promise
 };
 
 export const generateBulletPointsWithOpenAI = async (content: string): Promise<string[]> => {
+  // If in demo mode, return sample bullet points
+  if (isDemoMode()) {
+    console.log("Using demo mode for bullet points generation");
+    return [
+      "AI technologies are transforming industries through increased automation",
+      "Ethical concerns include potential job displacement and privacy issues",
+      "Economic benefits include increased productivity and new job creation",
+      "Regulatory frameworks need to balance innovation with public protection",
+      "Future challenges include ensuring equitable access to AI technologies"
+    ];
+  }
+
   const apiKey = localStorage.getItem("openai_api_key");
   
   if (!apiKey) {

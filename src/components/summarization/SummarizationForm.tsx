@@ -26,6 +26,7 @@ export interface SummarizationOptions {
   chapterSummarization: boolean;
   summaryType: "abstractive" | "extractive" | "hybrid";
   language: string;
+  sourceType?: "document" | "audio" | "video";
 }
 
 interface SummarizationFormProps {

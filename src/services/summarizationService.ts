@@ -1,7 +1,7 @@
 
 import { SummaryData } from "@/components/summarization/SummaryResult";
 import { SummarizationOptions } from "@/components/summarization/SummarizationForm";
-import { extractTextFromFile } from "@/utils/fileUtils";
+import { extractTextFromFile, getFileTypeCategory } from "@/utils/fileUtils";
 import { 
   generateSummaryWithOpenAI, 
   extractKeywordsWithOpenAI, 
@@ -10,21 +10,6 @@ import {
   createChapterSummariesWithOpenAI,
   generateBulletPointsWithOpenAI
 } from "./openaiService";
-
-// Helper function to identify file type from file extension
-const getFileType = (file: File): "document" | "audio" | "video" => {
-  const extension = file.name.split('.').pop()?.toLowerCase() || '';
-  
-  if (['pdf', 'txt', 'docx'].includes(extension)) {
-    return "document";
-  } else if (['mp3', 'wav', 'ogg'].includes(extension)) {
-    return "audio";
-  } else if (['mp4', 'mov', 'avi'].includes(extension)) {
-    return "video";
-  }
-  
-  return "document"; // Default to document
-};
 
 // Calculate estimated reading time based on word count and source type
 const calculateReadingTime = (text: string, sourceType: "document" | "audio" | "video"): string => {
@@ -59,12 +44,19 @@ export const summarizeDocument = async (
     
     // Step 1: Extract text from the file
     const text = await extractTextFromFile(file);
+    console.log("Extracted text length:", text.length);
+    
+    // Determine file type for options
+    const sourceType = getFileTypeCategory(file);
+    
+    // Update options with the source type
+    const updatedOptions = {
+      ...options,
+      sourceType
+    };
     
     // Step 2: Generate the main summary
-    const summary = await generateSummaryWithOpenAI(text, options);
-    
-    // Determine file type
-    const sourceType = getFileType(file);
+    const summary = await generateSummaryWithOpenAI(text, updatedOptions);
     
     // Extract title from file name
     const title = file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " ");

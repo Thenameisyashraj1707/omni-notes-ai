@@ -15,21 +15,23 @@ const Index = () => {
   const { toast } = useToast();
 
   const handleSummarize = async (file: File, options: SummarizationOptions) => {
-    // Check if API key is set
+    // In the demo mode (no API key), we don't show the warning
     const apiKey = localStorage.getItem("openai_api_key");
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please set your OpenAI API key in settings first",
-        variant: "destructive",
-      });
-      return;
+    if (apiKey && apiKey.trim() === "") {
+      console.log("Running in demo mode without API key");
     }
     
     setIsProcessing(true);
     try {
       const result = await summarizeDocument(file, options);
       setSummaryResult(result);
+      
+      if (!apiKey || apiKey.trim() === "") {
+        toast({
+          title: "Demo Mode Active",
+          description: "Using sample summaries. For better results, set your OpenAI API key in settings.",
+        });
+      }
     } catch (error) {
       console.error("Error summarizing document:", error);
       toast({
@@ -69,6 +71,9 @@ const Index = () => {
                 <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                   Transform PDFs, audio, and videos into concise, 
                   intelligent summaries with AI-powered analysis.
+                </p>
+                <p className="text-sm text-gray-500 mt-2 max-w-3xl mx-auto">
+                  The app works in demo mode without an API key, but for better results, add your OpenAI API key in settings.
                 </p>
               </div>
 
