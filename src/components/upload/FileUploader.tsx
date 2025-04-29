@@ -1,8 +1,9 @@
 
 import { useState } from "react";
-import { Upload, FileType, X, FileAudio, FileVideo } from "lucide-react";
+import { Upload, FileType, X, FileAudio, FileVideo, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type FileUploaderProps = {
   onFileSelected: (file: File) => void;
@@ -15,6 +16,7 @@ export const FileUploader = ({
 }: FileUploaderProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
@@ -73,6 +75,9 @@ export const FileUploader = ({
   };
 
   const handleFile = (file: File) => {
+    // Reset warning message
+    setWarningMessage(null);
+    
     // Check if the file type is valid
     if (!isValidFileType(file)) {
       toast({
@@ -96,11 +101,7 @@ export const FileUploader = ({
     // Check if file is a Word document (.docx, .doc)
     const fileExt = getFileTypeExtension(file);
     if (['docx', 'doc'].includes(fileExt)) {
-      toast({
-        title: "Limited support for Office documents",
-        description: "Microsoft Office documents have limited support. For best results, convert to PDF or plain text.",
-        variant: "warning",
-      });
+      setWarningMessage("Microsoft Office documents have limited support. For best results, convert to PDF or plain text.");
     }
 
     setSelectedFile(file);
@@ -109,6 +110,7 @@ export const FileUploader = ({
 
   const removeFile = () => {
     setSelectedFile(null);
+    setWarningMessage(null);
   };
 
   const handleButtonClick = () => {
@@ -175,6 +177,15 @@ export const FileUploader = ({
               <X className="h-5 w-5" />
             </Button>
           </div>
+          
+          {warningMessage && (
+            <Alert className="mt-3 bg-amber-50 border-amber-200">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700">
+                {warningMessage}
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       )}
     </div>
