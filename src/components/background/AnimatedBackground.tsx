@@ -115,8 +115,8 @@ export const AnimatedBackground: React.FC<{ className?: string }> = ({ className
           particle.x, particle.y, particle.radius,
           particle.x, particle.y, particle.radius * 3
         );
-        gradient.addColorStop(0, particle.color.replace(')', ', 0.3)').replace('rgba', 'rgba'));
-        gradient.addColorStop(1, particle.color.replace(')', ', 0)').replace('rgba', 'rgba'));
+        gradient.addColorStop(0, particle.color.replace(')', ', 0.3)'));
+        gradient.addColorStop(1, particle.color.replace(')', ', 0)'));
         ctx.fillStyle = gradient;
         ctx.fill();
 
