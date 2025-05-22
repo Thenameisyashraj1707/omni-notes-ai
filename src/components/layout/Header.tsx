@@ -12,8 +12,8 @@ export const Header = () => {
             OmniSummarize
           </h1>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10 hover:text-white">
+        <div className="flex items-center space-x-3">
+          <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10 hover:text-white transition-all">
             Sign In
           </Button>
           <Button size="sm" className="bg-gradient-omni hover:opacity-90 transition-opacity animate-glow">

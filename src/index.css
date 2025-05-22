@@ -105,4 +105,41 @@
   .glass-neo {
     @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-lg;
   }
+
+  .animate-gradient-shift {
+    animation: gradientShift 3s ease infinite alternate;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  .bg-gradient-omni {
+    @apply bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500;
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px rgba(99, 102, 241, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.8), 0 0 30px rgba(79, 70, 229, 0.6);
+  }
 }
