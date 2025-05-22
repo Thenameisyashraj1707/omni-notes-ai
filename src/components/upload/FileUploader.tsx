@@ -74,6 +74,22 @@ export const FileUploader = ({
     return acceptedFileTypes.join(", ").replace(/\./g, "");
   };
 
+  const getMaxFileSize = (file: File): number => {
+    const fileExt = getFileTypeExtension(file);
+    // Allow larger sizes for audio and video files (50 MB)
+    if (['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mov', 'avi', 'webm'].includes(fileExt)) {
+      return 50 * 1024 * 1024; // 50 MB for audio and video
+    }
+    return 10 * 1024 * 1024; // 10 MB for other file types
+  };
+
+  const formatFileSize = (sizeInBytes: number): string => {
+    if (sizeInBytes < 1024 * 1024) {
+      return `${(sizeInBytes / 1024).toFixed(2)} KB`;
+    }
+    return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
   const handleFile = (file: File) => {
     // Reset warning message
     setWarningMessage(null);
@@ -88,11 +104,15 @@ export const FileUploader = ({
       return;
     }
 
-    // Check file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // Get maximum file size based on file type
+    const maxSize = getMaxFileSize(file);
+    
+    // Check file size against the appropriate limit
+    if (file.size > maxSize) {
+      const maxSizeMB = maxSize / (1024 * 1024);
       toast({
         title: "File too large",
-        description: "Maximum file size is 10MB.",
+        description: `Maximum file size is ${maxSizeMB} MB for this file type.`,
         variant: "destructive",
       });
       return;
@@ -102,6 +122,11 @@ export const FileUploader = ({
     const fileExt = getFileTypeExtension(file);
     if (['docx', 'doc'].includes(fileExt)) {
       setWarningMessage("Microsoft Office documents have limited support. For best results, convert to PDF or plain text.");
+    }
+
+    // Add warning for large audio/video files that might take longer to process
+    if (['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mov', 'avi', 'webm'].includes(fileExt) && file.size > 25 * 1024 * 1024) {
+      setWarningMessage("Large audio/video files may take longer to process. Please be patient while we extract the text.");
     }
 
     setSelectedFile(file);
@@ -150,7 +175,8 @@ export const FileUploader = ({
               Select File
             </Button>
             <p className="text-xs text-gray-400 mt-4">
-              Max file size: 10MB. Supporting: {getFileTypeDescription()}
+              Max file size: Documents - 10MB, Audio/Video - 50MB. 
+              <br />Supporting: {getFileTypeDescription()}
             </p>
           </div>
         </div>
@@ -164,7 +190,7 @@ export const FileUploader = ({
               <div className="truncate">
                 <p className="font-medium truncate">{selectedFile.name}</p>
                 <p className="text-xs text-gray-500">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  {formatFileSize(selectedFile.size)}
                 </p>
               </div>
             </div>

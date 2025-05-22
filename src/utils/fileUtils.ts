@@ -1,4 +1,3 @@
-
 import { transcribeAudioVideo, loadTransformersLibrary } from "@/services/speechToTextService";
 
 // Function to extract text content from a file
